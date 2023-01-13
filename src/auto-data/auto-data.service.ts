@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { IVehicleDetailsByVinResponse } from 'src/dto/IVehicleDetailByVin.dto';
 import { VehicleInfoDBInfo } from 'src/dto/VehicleInfoDBInfo.dto';
 import shortUUID, { SUUID } from 'short-uuid';
-import CryptoJS from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
 import short from 'short-uuid';
 
@@ -14,46 +14,50 @@ export class AutoDataService {
     } catch {}
   }
   getAutoDataInformation = async (vin: string): Promise<any> => {
-    const realm = 'http://communitymanager';
-    const appId = 'autodata-GCSZuViifCnPSkk4y5BTwXBDPYiUaP7Q4hiEL8aX';
-    const appSecret =
-      '9990d848bac60312010d5d79fd5580a7c35e7dde7bfe71c0a44976bc3ea03012';
-    const timestamp = Date.now();
+    try {
+      const realm = 'http://communitymanager';
+      const appId = 'autodata-GCSZuViifCnPSkk4y5BTwXBDPYiUaP7Q4hiEL8aX';
+      const appSecret =
+        '9990d848bac60312010d5d79fd5580a7c35e7dde7bfe71c0a44976bc3ea03012';
+      const timestamp = Date.now();
 
-    // const nonce = shortUUID.generate();
-    const nonce = 'qOXVB9';
+      // const nonce = shortUUID.generate();
+      const nonce = 'qOXVB9';
 
-    const baseString = nonce + timestamp.toString() + appSecret;
+      const baseString = nonce + timestamp.toString() + appSecret;
 
-    const secretDigest = CryptoJS.SHA1(baseString).toString(
-      CryptoJS.enc.Base64,
-    );
+      const secretDigest = CryptoJS.SHA1(baseString).toString(
+        CryptoJS.enc.Base64,
+      );
+      const token = `http://communitymanager realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
+      console.log(token);
+      const endpoint = `https://cvd.api.chromedata.com:443/v1.0/CVD/vin/${vin}?language_Locale=en_US`;
+      const config = {
+        // eslint-disable-line @typescript-eslint/no-explicit-any
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      };
 
-    const token = `http://communitymanager realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
-    const endpoint = `https://cvd.api.chromedata.com:443/v1.0/CVD/vin/${vin}?language_Locale=en_US`;
-    const config = {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        //Authorization: token,
-      },
-    };
+      console.log('fetching the VIN description from AutoData API');
+      const response: any = await axios(endpoint, config);
+      console.log(response);
 
-    console.log('fetching the VIN description from AutoData API');
-    const response: any = await axios(endpoint, config);
-    console.log(response);
+      // Invalid response payload if error is true or result object is undefined
+      if (response.data?.error || !response.data?.result) {
+        console.log('Invalid response payload');
+      }
 
-    // Invalid response payload if error is true or result object is undefined
-    if (response.data?.error || !response.data?.result) {
-      console.log('Invalid response payload');
+      if (response.data.result.validVin) {
+        return response.data.result;
+      }
+
+      console.log('Invalid VIN');
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
     }
-
-    if (response.data.result.validVin) {
-      return response.data.result;
-    }
-
-    console.log('Invalid VIN');
   };
 
   getVehicleByVin = async (
