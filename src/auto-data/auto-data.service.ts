@@ -1,17 +1,19 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { IVehicleDetailsByVinResponse } from 'src/dto/IVehicleDetailByVin.dto';
 import { VehicleInfoDBInfo } from 'src/dto/VehicleInfoDBInfo.dto';
-import shortUUID, { SUUID } from 'short-uuid';
+
 import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
-import short from 'short-uuid';
+import * as suid from 'suid';
 
 @Injectable()
 export class AutoDataService {
   async getVehicleDetailsByVin(vin: string) {
     try {
       return await this.getVehicleByVin(vin);
-    } catch {}
+    } catch (err) {
+      console.log(err);
+    }
   }
   getAutoDataInformation = async (vin: string): Promise<any> => {
     try {
@@ -21,15 +23,15 @@ export class AutoDataService {
         '9990d848bac60312010d5d79fd5580a7c35e7dde7bfe71c0a44976bc3ea03012';
       const timestamp = Date.now();
 
-      // const nonce = shortUUID.generate();
-      const nonce = 'qOXVB9';
+      const nonce = suid.better();
+      // const nonce = 'pkWMcJGrsMjcyLaTCwekao';
 
       const baseString = nonce + timestamp.toString() + appSecret;
 
       const secretDigest = CryptoJS.SHA1(baseString).toString(
         CryptoJS.enc.Base64,
       );
-      const token = `http://communitymanager realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
+      const token = `Atmosphere realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
       console.log(token);
       const endpoint = `https://cvd.api.chromedata.com:443/v1.0/CVD/vin/${vin}?language_Locale=en_US`;
       const config = {
@@ -56,6 +58,8 @@ export class AutoDataService {
 
       console.log('Invalid VIN');
     } catch (e) {
+      console.log(e);
+
       throw new HttpException(e.message, e.status);
     }
   };
