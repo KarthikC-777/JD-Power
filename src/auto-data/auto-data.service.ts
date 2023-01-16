@@ -1,10 +1,10 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { IVehicleDetailsByVinResponse } from 'src/dto/IVehicleDetailByVin.dto';
 import { VehicleInfoDBInfo } from 'src/dto/VehicleInfoDBInfo.dto';
 
 import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
-import * as suid from 'suid';
+import * as suid from 'suid'
 
 @Injectable()
 export class AutoDataService {
@@ -13,6 +13,8 @@ export class AutoDataService {
       return await this.getVehicleByVin(vin);
     } catch (err) {
       console.log(err);
+      throw new HttpException(err.message,err.status)
+      
     }
   }
   getAutoDataInformation = async (vin: string): Promise<any> => {
@@ -50,17 +52,18 @@ export class AutoDataService {
       // Invalid response payload if error is true or result object is undefined
       if (response.data?.error || !response.data?.result) {
         console.log('Invalid response payload');
+        throw new HttpException('Invalid response payload/ Invalid VIN', HttpStatus.BAD_REQUEST)
       }
 
       if (response.data.result.validVin) {
         return response.data.result;
       }
-
       console.log('Invalid VIN');
-    } catch (e) {
-      console.log(e);
-
-      throw new HttpException(e.message, e.status);
+      throw new HttpException('Invalid VIN', HttpStatus.BAD_REQUEST)
+      
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(err.response, err.status);
     }
   };
 
@@ -90,7 +93,9 @@ export class AutoDataService {
       console.log(details, 'Valid VIN received, vehicle details');
 
       return details;
-    } catch {}
+    } catch(err) {
+      throw new HttpException(err.response,err.status)
+    }
 
     //     const generateSecretDigest = (
     //       nonce: string,
