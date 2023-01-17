@@ -13,11 +13,11 @@ export class AutoDataService {
       return await this.getVehicleByVin(vin);
     } catch (err) {
       console.log(err);
-      throw new HttpException(err.message,err.status)
+      throw new HttpException('Vehicle with this VIN Not Found',HttpStatus.NOT_FOUND)
       
     }
   }
-  getAutoDataInformation = async (vin: string): Promise<any> => {
+  getAutoDataInformation = async (vin: string): Promise<VehicleInfoDBInfo> => {
     try {
       const realm = 'http://communitymanager';
       const appId = 'autodata-GCSZuViifCnPSkk4y5BTwXBDPYiUaP7Q4hiEL8aX';
@@ -94,7 +94,7 @@ export class AutoDataService {
 
       return details;
     } catch(err) {
-      throw new HttpException(err.response,err.status)
+      throw new HttpException(err.message,err.status)
     }
 
     //     const generateSecretDigest = (
