@@ -17,6 +17,26 @@ export class AutoDataService {
       
     }
   }
+
+ generateSecretDigest = (
+    nonce: string,
+    timestamp: number,
+    appSecret: string,
+  ) => {
+    const baseString = nonce + timestamp.toString() + appSecret;
+    return CryptoJS.SHA1(baseString).toString(CryptoJS.enc.Base64);
+  };
+
+  generateAutoDataToken = (
+    realm: string,
+    appId: string,
+    nonce: string,
+    secretDigest: string,
+    timestamp: number,
+  ) => {
+    return `Atmosphere realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
+  };
+
   getAutoDataInformation = async (vin: string): Promise<VehicleInfoDBInfo> => {
     try {
       const realm = 'http://communitymanager';
@@ -30,11 +50,15 @@ export class AutoDataService {
 
       const baseString = nonce + timestamp.toString() + appSecret;
 
-      const secretDigest = CryptoJS.SHA1(baseString).toString(
-        CryptoJS.enc.Base64,
-      );
-      const token = `Atmosphere realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
-      console.log(token);
+      // const secretDigest = CryptoJS.SHA1(baseString).toString(
+      //   CryptoJS.enc.Base64);
+
+      const secretDigest= this.generateSecretDigest(nonce, timestamp, appSecret);
+
+      //const token = `Atmosphere realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
+      //console.log(token);
+
+      const token= this.generateAutoDataToken(realm,appId,nonce,secretDigest,timestamp,);
       const endpoint = `https://cvd.api.chromedata.com:443/v1.0/CVD/vin/${vin}?language_Locale=en_US`;
       const config = {
         // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -94,26 +118,11 @@ export class AutoDataService {
 
       return details;
     } catch(err) {
-      throw new HttpException(err.message,err.status)
+
+      if (err.response?.status === HttpStatus.NOT_FOUND) {
+        throw new HttpException('VIN Not Found',HttpStatus.NOT_FOUND)
+      }
+      throw new HttpException("Internal Server Error",HttpStatus.INTERNAL_SERVER_ERROR)
     }
-
-    //     const generateSecretDigest = (
-    //       nonce: string,
-    //       timestamp: number,
-    //       appSecret: string,
-    //     ) => {
-    //       const baseString = nonce + timestamp.toString() + appSecret;
-    //       return CryptoJS.SHA1(baseString).toString(CryptoJS.enc.Base64);
-    //     };
-
-    //     const generateAutoDataToken = (
-    //       realm: string,
-    //       appId: string,
-    //       nonce: string,
-    //       secretDigest: string,
-    //       timestamp: number,
-    //     ) => {
-    //       return `http://communitymanager realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
-    //     };
   };
 }
