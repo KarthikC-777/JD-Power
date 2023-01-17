@@ -6,4 +6,5 @@ export class VehicleInfoDBInfo {
   exteriorColors: string;
   vehicle: string;
   vehicles: string;
+  styleId: string;
 }
