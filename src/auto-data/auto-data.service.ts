@@ -6,6 +6,7 @@ import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
 import * as suid from 'suid';
 import { ConfigService } from '@nestjs/config';
+import { logger } from 'src/config/logger';
 
 @Injectable()
 export class AutoDataService {
@@ -64,12 +65,12 @@ export class AutoDataService {
         Authorization: token,
       },
     };
-    console.log('fetching the VIN description from AutoData API');
+    logger.log('Fetching the VIN description from AutoData API');
     const response = await axios(endpoint, config);
-    console.log(response);
+    logger.log("Autodata API Response",response);
     // Invalid response payload if error is true or result object is undefined
     if (response.data?.error || !response.data?.result) {
-      console.log('Invalid response payload');
+      logger.error('Invalid response payload');
       throw new HttpException(
         'Invalid response payload/ Invalid VIN',
         HttpStatus.BAD_REQUEST,
@@ -86,7 +87,7 @@ export class AutoDataService {
     vin: string,
   ): Promise<IVehicleDetailsByVinResponse> => {
     const results = await this.getAutoDataInformation(vin);
-    console.log(results, 'getAutoDataInformation - results');
+    logger.log(results, "getAutoDataInformation - results");
 
     // Avoid unexpected errors when trying to access to object members
     // by using a default data structure `[]` in this case:
@@ -104,7 +105,7 @@ export class AutoDataService {
       styleId: vehicles[0]?.styleId ?? '',
     };
 
-    console.log(details, 'Valid VIN received, vehicle details');
+    logger.log(details, "Valid VIN received, vehicle details");
 
     return details;
   };
