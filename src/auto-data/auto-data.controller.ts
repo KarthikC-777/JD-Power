@@ -1,4 +1,11 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { validateVin } from 'src/util/validators';
 import { AutoDataService } from './auto-data.service';
 
 @Controller('vehicle-info')
@@ -7,6 +14,10 @@ export class AutoDataController {
 
   @Get('vin/:vin')
   async getVehicleDetailsByVin(@Param('vin') vin: string) {
-    return await this.autodtaService.getVehicleDetailsByVin(vin);
+    const valid = validateVin(vin);
+    if (valid) {
+      return await this.autodtaService.getVehicleDetailsByVin(vin);
+    }
+    throw new HttpException('Invalid Vin', HttpStatus.BAD_REQUEST);
   }
 }

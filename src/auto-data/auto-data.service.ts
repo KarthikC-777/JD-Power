@@ -11,15 +11,7 @@ import { ConfigService } from '@nestjs/config';
 export class AutoDataService {
   constructor(private configService: ConfigService) {}
   async getVehicleDetailsByVin(vin: string) {
-    try {
-      return await this.getVehicleByVin(vin);
-    } catch (err) {
-      console.log(err);
-      throw new HttpException(
-        'Vehicle with this VIN Not Found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    return await this.getVehicleByVin(vin);
   }
 
   generateSecretDigest = (
@@ -44,95 +36,76 @@ export class AutoDataService {
   };
 
   getAutoDataInformation = async (vin: string): Promise<VehicleInfoDBInfo> => {
-    try {
-      const realm = this.configService.get<string>(
-        'JD_POWER_CONSTANTS.autodata_realm',
+    const realm = this.configService.get<string>(
+      'JD_POWER_CONSTANTS.autodata_realm',
+    );
+    const appId = this.configService.get<string>('appId');
+    const appSecret = this.configService.get<string>('appSecret');
+    const timestamp = Date.now();
+    const nonce = suid.better();
+    const secretDigest = this.generateSecretDigest(nonce, timestamp, appSecret);
+    const token = this.generateAutoDataToken(
+      realm,
+      appId,
+      nonce,
+      secretDigest,
+      timestamp,
+    );
+    const endpoint = `${this.configService.get<string>(
+      'JD_POWER_CONSTANTS.autodata_api_url',
+    )}/vin/${vin}?language_Locale=${this.configService.get<string>(
+      'autodata_language',
+    )}`;
+    const config = {
+      // eslint-disable-line @typescript-eslint/no-explicit-any
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: token,
+      },
+    };
+    console.log('fetching the VIN description from AutoData API');
+    const response = await axios(endpoint, config);
+    console.log(response);
+    // Invalid response payload if error is true or result object is undefined
+    if (response.data?.error || !response.data?.result) {
+      console.log('Invalid response payload');
+      throw new HttpException(
+        'Invalid response payload/ Invalid VIN',
+        HttpStatus.BAD_REQUEST,
       );
-      const appId = this.configService.get<string>('appId');
-      const appSecret = this.configService.get<string>('appSecret');
-      const timestamp = Date.now();
-      const nonce = suid.better();
-      const secretDigest = this.generateSecretDigest(
-        nonce,
-        timestamp,
-        appSecret,
-      );
-      const token = this.generateAutoDataToken(
-        realm,
-        appId,
-        nonce,
-        secretDigest,
-        timestamp,
-      );
-      const endpoint = `${this.configService.get<string>(
-        'JD_POWER_CONSTANTS.autodata_api_url',
-      )}/vin/${vin}?language_Locale=${this.configService.get<string>(
-        'autodata_language',
-      )}`;
-      const config = {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      };
-      console.log('fetching the VIN description from AutoData API');
-      const response: any = await axios(endpoint, config);
-      console.log(response);
-      // Invalid response payload if error is true or result object is undefined
-      if (response.data?.error || !response.data?.result) {
-        console.log('Invalid response payload');
-        throw new HttpException(
-          'Invalid response payload/ Invalid VIN',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      if (response.data.result.validVin) {
-        return response.data.result;
-      }
-      console.log('Invalid VIN');
-      throw new HttpException('Invalid VIN', HttpStatus.BAD_REQUEST);
-    } catch (err) {
-      console.log(err);
-      throw new HttpException(err.response, err.status);
     }
+    if (response.data.result.validVin) {
+      return response.data.result;
+    }
+    // console.log('Invalid VIN');
+    // throw new HttpException('Invalid VIN', HttpStatus.BAD_REQUEST);
   };
 
   getVehicleByVin = async (
     vin: string,
   ): Promise<IVehicleDetailsByVinResponse> => {
-    try {
-      const results = await this.getAutoDataInformation(vin);
-      console.log(results, 'getAutoDataInformation - results');
+    const results = await this.getAutoDataInformation(vin);
+    console.log(results, 'getAutoDataInformation - results');
 
-      // Avoid unexpected errors when trying to access to object members
-      // by using a default data structure `[]` in this case:
-      const vehicles = results.vehicles ?? [];
-      const exteriorColors = results.exteriorColors ?? [];
+    // Avoid unexpected errors when trying to access to object members
+    // by using a default data structure `[]` in this case:
+    const vehicles = results.vehicles ?? [];
+    const exteriorColors = results.exteriorColors ?? [];
 
-      const details = {
-        vin,
-        year: isNaN(+results.year) ? undefined : +results.year,
-        make: results.make,
-        model: results.model,
-        trim: vehicles[0]?.trim,
-        color: exteriorColors[0]?.genericDesc,
-        colorHex: exteriorColors[0]?.rgbHexValue ?? '',
-        styleId: vehicles[0]?.styleId ?? '',
-      };
+    const details = {
+      vin,
+      year: isNaN(+results.year) ? undefined : +results.year,
+      make: results.make,
+      model: results.model,
+      trim: vehicles[0]?.trim,
+      color: exteriorColors[0]?.genericDesc,
+      colorHex: exteriorColors[0]?.rgbHexValue ?? '',
+      styleId: vehicles[0]?.styleId ?? '',
+    };
 
-      console.log(details, 'Valid VIN received, vehicle details');
+    console.log(details, 'Valid VIN received, vehicle details');
 
-      return details;
-    } catch (err) {
-      if (err.response?.status === HttpStatus.NOT_FOUND) {
-        throw new HttpException('VIN Not Found', HttpStatus.NOT_FOUND);
-      }
-      throw new HttpException(
-        'Internal Server Error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return details;
   };
 }
