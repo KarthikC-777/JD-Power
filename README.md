@@ -66,7 +66,64 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## JD Power
+
+# Getting Started - ChromeData (AutoData API)
+
+This document highlights the steps involved in getting started with ChromeData (AutoData API).
+
+## Setup
+
+- Signup and Login for [AutoData API](https://portal.chromedata.com/enterpriseapi/#/home/login)
+- Create the App under “Apps”
+- Copy the “appId” and “appSecret”
+
+## VIN Description API
+
+This API is used to fetch the vehicle content information based on the VIN.
+
+- Under “APIs → All APIs → ChromeData VIN Descriptions”
+- Click on “Documentation → API Reference”
+- Try out the below API - “getVinDescription****”**** in the playground.
+
+`GET /vin/{vin} - Returns vehicle content for the requested vehicle.`
+
+- Click on “Setup” and ensure that the auto-filled “appId” and “appSecret” are proper. Click on “Save”.
+- Provide “Accept” as “application/json”.
+- Provide “language_local” as “en_US”.
+- Provide “vin” value.
+- Click on “Security”, verify each step, proceed and “Finish”.
+- Click on “Invoke”.
+- Verify the response received from the API.
+
+## Integration
+
+API Endpoint Sample - `https://cvd.api.chromedata.com:443/1.0/CVD/vin/${vin}?language_Locale=en_US`
+
+Headers:
+
+- Accept: `application/json`
+- Content-Type: `application/json`
+- Authorization: `Token` ([Generation Steps](https://www.notion.so/Getting-Started-ChromeData-AutoData-API-e46b38caf414459489081c8a38fb5636))
+
+**Authorization Token Generation**
+
+At a high level, the token is built using a comma delimited list of name value pairs. The name fields that need to be set are -
+
+- realm - Identifies that the message comes from the realm of your app
+- chromedata_app_id - App ID
+- chromedata_nonce - A random string uniquely generated for each request
+- chromedata_signature_method - A value indicating the signature method being used. Should be set to “SHA1”.
+- chromedata_timestamp - The timestamp of the request, expressed as the number of milliseconds
+- chromedata_secret_digest - A value produced by concatenating the nonce, the timestamp, and the Shared Secret, hashing the combined value using SHA-1, and then Base-64 encoding the result. You can also URL-encode the result, but this isn't required.
+
+**chromedata_secret_digest generation sample code:**
+
+`const baseString = nonce + timestamp.toString() + appSecret;
+return CryptoJS.SHA1(baseString).toString(CryptoJS.enc.Base64);`
+
+**Token generation sample code**
+
+`return Atmosphere realm="${realm}",chromedata_app_id="${appId}",chromedata_nonce="${nonce}",chromedata_secret_digest="${secretDigest}",chromedata_digest_method="SHA1",chromedata_version="1.0",chromedata_timestamp="${timestamp}"`;
 
 
 ## Request:
@@ -99,9 +156,11 @@ The other response will be an entire report about the vehicle in PDF Format
 
 ## References:
 
-JD Power documentation: 
-Nestjs documentation:
-jsPDF documentation:
+JD Power documentation: https://www.notion.so/Getting-Started-ChromeData-AutoData-API-e46b38caf414459489081c8a38fb5636
+
+Nestjs documentation: https://docs.nestjs.com/
+
+jsPDF documentation: https://artskydj.github.io/jsPDF/docs/jsPDF.html
 
 ## Contact for more info:-
 
