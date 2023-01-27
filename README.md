@@ -26,6 +26,14 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+Fetching all details about a vehicle using VIN (Vehicle Identification Number) And generating a PDF report using JD Power
+
+## Setting Up
+
+Make **.env** file in your project and initialize all the variables as per **.env.example** variables.
+
+Then initialize the _controllers_ and _services_ from the **autodata.module.ts** file via the factory methods _serviceFactory_(for services) and controllerFactory (for controllers). 
+
 ## Installation
 
 ```bash
@@ -58,15 +66,55 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## JD Power
+
+
+## Request:
+
+GET: 'http://{host}/vehicle-info/vin/${vin}'
+
+We need to pass the vehicle identification number as the parameter in the above URL.
+
+GET: 'http://{host}/vehicle-info/report/${vin}'
+
+We need to pass the vehicle identification number as the parameter in the above URL.
+
+## Response:
+
+```json
+{
+    "vin": "4JGFD8KB5PA893908",
+    "year": 2023,
+    "make": "Mercedes-Benz",
+    "model": "AMG GLE 63 Coupe",
+    "trim": "S 4MATIC",
+    "color": "Black",
+    "colorHex": "#0A0A0C",
+    "styleId": 432764
+}
+```
+
+The other response will be an entire report about the vehicle in PDF Format
+
+
+## References:
+
+JD Power documentation: 
+Nestjs documentation:
+jsPDF documentation:
+
+## Contact for more info:-
+
+1. Arindam Nath - arindam.nath@ymedialabs.com
+2. Karthik C - karthik.c@ymedialabs.com
+3. Rahul Ranjan Pandey - rahul.pandey@ymedialabs.com
+4. Manjunath Subramanyam - manjunath.subramanyam@ymedialabs.com
+5. Naresh - naresh.yadulla@ymedialabs.com
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
