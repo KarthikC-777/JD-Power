@@ -9,6 +9,10 @@ import * as suid from 'suid';
 import { ConfigService } from '@nestjs/config';
 import { logger } from 'src/config/logger';
 
+interface IAnyObject {
+  [key: string]: any;
+}
+
 @Injectable()
 export class AutoDataService {
   constructor(private configService: ConfigService) {}
@@ -110,7 +114,7 @@ export class AutoDataService {
     return details;
   }
 
-  private checkIfArrayContainsObjects = (data: Array<any>) => { 
+  private checkIfArrayContainsObjects = (data: Array<IAnyObject>) => { 
     if (Array.isArray(data)) {
       if (typeof data[0] === 'object') {
         return true;
@@ -121,11 +125,11 @@ export class AutoDataService {
     return false;
   }
   
-  private checkIfArrayLengthIsOne = (data: any) =>  {
+  private checkIfArrayLengthIsOne = (data: IAnyObject) =>  {
     return Array.isArray(data) && data.length === 1;
   }
   
-  private buildHeader = (data: Array<any>): string[] => {
+  private buildHeader = (data: Array<IAnyObject>): string[] => {
     const columnSet = new Set<string>();
     if (!this.checkIfArrayContainsObjects(data)) {
       return [];
@@ -150,9 +154,9 @@ export class AutoDataService {
     }
     return stringifiedRow ? stringifiedRow : '';
   }
-  private buildBody = (data: Array<any>): string[][] => {
+  private buildBody = (data: Array<IAnyObject>): string[][] => {
     const res = [];
-    let row: Array<any> = [];
+    let row: Array<IAnyObject> = [];
     const table_columns = this.buildHeader(data);
     const isArrayOfObjects = this.checkIfArrayContainsObjects(data);
     if (isArrayOfObjects) {
@@ -170,7 +174,7 @@ export class AutoDataService {
     return res;
   }
   
-  private getOverallDetailsTableBody = (data: any)=>  {
+  private getOverallDetailsTableBody = (data: IAnyObject)=>  {
     const rows = [];
     for (const key in data) {
       if (typeof data[key] !== 'object') {
@@ -180,7 +184,7 @@ export class AutoDataService {
     return rows;
   }
   
-  private getTableHeaders = (data: any) => {
+  private getTableHeaders = (data: IAnyObject) => {
     const rows = [];
     for (const key in data) {
       if (typeof data[key] === 'object') {
@@ -190,7 +194,7 @@ export class AutoDataService {
     return rows;
   }
   
-  private generatePdf = (data: any, pdfHeading = 'Report') => {
+  private generatePdf = (data: IAnyObject, pdfHeading = 'Report') => {
     const doc = new jsPDF({ orientation: 'landscape' });
     try {
       logger.log('Generating PDF Report');
