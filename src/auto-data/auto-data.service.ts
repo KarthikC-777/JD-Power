@@ -81,15 +81,13 @@ export class AutoDataService {
     if (response.data.result.validVin) {
       return response.data.result;
     }
-    // console.log('Invalid VIN');
-    // throw new HttpException('Invalid VIN', HttpStatus.BAD_REQUEST);
   };
 
   private getVehicleByVin = async (
     vin: string,
   ): Promise<IVehicleDetailsByVinResponse> => {
     const results = await this.getAutoDataInformation(vin);
-    logger.log(results, "getAutoDataInformation - results");
+    logger.log(`getAutoDataInformation - results - ${results}`);
     
     // Avoid unexpected errors when trying to access to object members
     // by using a default data structure `[]` in this case:
@@ -107,7 +105,7 @@ export class AutoDataService {
       styleId: vehicles[0]?.styleId ?? '',
     };
 
-    logger.log(details, "Valid VIN received, vehicle details");
+    logger.log(`Valid VIN received, vehicle details - ${details}`);
 
     return details;
   }
